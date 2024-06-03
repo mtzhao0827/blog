@@ -1,0 +1,6 @@
+.vscode
+.DS_Store
+*.lock
+public
+resources
+assets/jsconfig.json

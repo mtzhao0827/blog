@@ -1,8 +1,115 @@
+---
+title: 从源码编译 Python
+description: ZFS is a state-of-the-art filesystem, and Docker is a revolutionary tool. But combining them can be a terrible idea...
+slug: docker-and-zfs-a-tough-pair
+date: 2022-08-07 08:54:00+0800
+categories:
+    - filesystem
+    - containerization
+    - kernel
+tags:
+    - overlayfs
+    - zfs
+    - docker
+---
+
+### apt换源
+```sh
+sudo vi /etc/apt/sources.list
+```
+在arm64下，使用ubuntu-ports
+
+```
+# 默认注释了源码镜像以提高 apt update 速度，如有需要可自行取消注释
+deb https://mirrors.tuna.tsinghua.edu.cn/ubuntu-ports/ jammy main restricted universe multiverse
+# deb-src https://mirrors.tuna.tsinghua.edu.cn/ubuntu-ports/ jammy main restricted universe multiverse
+deb https://mirrors.tuna.tsinghua.edu.cn/ubuntu-ports/ jammy-updates main restricted universe multiverse
+# deb-src https://mirrors.tuna.tsinghua.edu.cn/ubuntu-ports/ jammy-updates main restricted universe multiverse
+deb https://mirrors.tuna.tsinghua.edu.cn/ubuntu-ports/ jammy-backports main restricted universe multiverse
+# deb-src https://mirrors.tuna.tsinghua.edu.cn/ubuntu-ports/ jammy-backports main restricted universe multiverse
+
+# 以下安全更新软件源包含了官方源与镜像站配置，如有需要可自行修改注释切换
+deb https://mirrors.tuna.tsinghua.edu.cn/ubuntu-ports/ jammy-security main restricted universe multiverse
+# deb-src https://mirrors.tuna.tsinghua.edu.cn/ubuntu-ports/ jammy-security main restricted universe multiverse
+
+# 预发布软件源，不建议启用
+# deb https://mirrors.tuna.tsinghua.edu.cn/ubuntu-ports/ jammy-proposed main restricted universe multiverse
+# # deb-src https://mirrors.tuna.tsinghua.edu.cn/ubuntu-ports/ jammy-proposed main restricted universe multiverse
+```
+
+但是在amd64中，使用ubuntu
+
+```
+# 默认注释了源码镜像以提高 apt update 速度，如有需要可自行取消注释
+deb https://mirrors.tuna.tsinghua.edu.cn/ubuntu/ jammy main restricted universe multiverse
+# deb-src https://mirrors.tuna.tsinghua.edu.cn/ubuntu/ jammy main restricted universe multiverse
+deb https://mirrors.tuna.tsinghua.edu.cn/ubuntu/ jammy-updates main restricted universe multiverse
+# deb-src https://mirrors.tuna.tsinghua.edu.cn/ubuntu/ jammy-updates main restricted universe multiverse
+deb https://mirrors.tuna.tsinghua.edu.cn/ubuntu/ jammy-backports main restricted universe multiverse
+# deb-src https://mirrors.tuna.tsinghua.edu.cn/ubuntu/ jammy-backports main restricted universe multiverse
+
+# 以下安全更新软件源包含了官方源与镜像站配置，如有需要可自行修改注释切换
+deb https://mirrors.tuna.tsinghua.edu.cn/ubuntu/ jammy-security main restricted universe multiverse
+# deb-src https://mirrors.tuna.tsinghua.edu.cn/ubuntu/ jammy-security main restricted universe multiverse
+
+# 预发布软件源，不建议启用
+# deb https://mirrors.tuna.tsinghua.edu.cn/ubuntu/ jammy-proposed main restricted universe multiverse
+# # deb-src https://mirrors.tuna.tsinghua.edu.cn/ubuntu/ jammy-proposed main restricted universe multiverse
+```
+
+```sh
+sudo apt update
+sudo apt install wget
+```
+
+### 将源码直接下载到服务器中
+
+```sh
+mkdir -p ~/python3.7
+cd ~/python3.7/
+# CPython
+wget https://www.python.org/ftp/python/3.7.17/Python-3.7.17.tgz
+tar -xzvf Python-3.7.17.tgz
+
+PYTHON_SRC=$HOME/python3.7/Python-3.7.17
+cd $PYTHON_SRC
+```
+
+### 安装编译依赖
+```sh
+sudo apt-get install -y build-essential python3-pip libssl-dev libffi-dev libopenmpi-dev libbz2-dev liblzma-dev
+```
+### 开始编译
+
+```sh
+./configure
+make -j$(nproc)
+./python --version
+```
+
+### 创建虚拟环境
+
+```sh
+PROJ_DIR=$HOME/rl-stock-trading-1103
+cd $PROJ_DIR
+$PYTHON_SRC/python -m venv venv
+source venv/bin/activate
+```
+
+### 安装环境
+
+```sh
+pip install -r requirements.txt -i https://pypi.tuna.tsinghua.edu.cn/simple
+```
+
+
+
 - 为什么要用Python3.7（在pypi上看tensorflowxx的wheel包可用的python版本）
 
 https://pypi.org/project/tensorflow/1.15.0/#files
 
 - 为什么要从源码编译Python3.7（包管理器没有）
+
 
 - 怎么编译
 
@@ -22,8 +129,8 @@ https://pypi.org/project/tensorflow/1.15.0/#files
 ```sh
 sudo vi /etc/apt/sources.list
 ```
-为什么使用ubuntu-ports？
-目前受支持的版本是24.04 LTS，我使用的版本是22.04 LTS，所以需要使用ubuntu-ports才能正确获取软件源。
+在arm64下，使用ubuntu-ports
+
 ```
 # 默认注释了源码镜像以提高 apt update 速度，如有需要可自行取消注释
 deb https://mirrors.tuna.tsinghua.edu.cn/ubuntu-ports/ jammy main restricted universe multiverse
@@ -41,6 +148,28 @@ deb https://mirrors.tuna.tsinghua.edu.cn/ubuntu-ports/ jammy-security main restr
 # deb https://mirrors.tuna.tsinghua.edu.cn/ubuntu-ports/ jammy-proposed main restricted universe multiverse
 # # deb-src https://mirrors.tuna.tsinghua.edu.cn/ubuntu-ports/ jammy-proposed main restricted universe multiverse
 ```
+
+但是在amd64中，使用ubuntu
+
+```
+# 默认注释了源码镜像以提高 apt update 速度，如有需要可自行取消注释
+deb https://mirrors.tuna.tsinghua.edu.cn/ubuntu/ jammy main restricted universe multiverse
+# deb-src https://mirrors.tuna.tsinghua.edu.cn/ubuntu/ jammy main restricted universe multiverse
+deb https://mirrors.tuna.tsinghua.edu.cn/ubuntu/ jammy-updates main restricted universe multiverse
+# deb-src https://mirrors.tuna.tsinghua.edu.cn/ubuntu/ jammy-updates main restricted universe multiverse
+deb https://mirrors.tuna.tsinghua.edu.cn/ubuntu/ jammy-backports main restricted universe multiverse
+# deb-src https://mirrors.tuna.tsinghua.edu.cn/ubuntu/ jammy-backports main restricted universe multiverse
+
+# 以下安全更新软件源包含了官方源与镜像站配置，如有需要可自行修改注释切换
+deb https://mirrors.tuna.tsinghua.edu.cn/ubuntu/ jammy-security main restricted universe multiverse
+# deb-src https://mirrors.tuna.tsinghua.edu.cn/ubuntu/ jammy-security main restricted universe multiverse
+
+# 预发布软件源，不建议启用
+# deb https://mirrors.tuna.tsinghua.edu.cn/ubuntu/ jammy-proposed main restricted universe multiverse
+# # deb-src https://mirrors.tuna.tsinghua.edu.cn/ubuntu/ jammy-proposed main restricted universe multiverse
+```
+
+
 
 ```sh
 sudo apt update
@@ -164,4 +293,69 @@ pip install -r requirements.txt -i https://pypi.tuna.tsinghua.edu.cn/simple
 ```
 
 
+
+报错
+
+```
+ERROR: Failed building wheel for mpi4py
+Successfully built gym
+Failed to build mpi4py
+ERROR: Could not build wheels for mpi4py, which is required to install pyproject.toml-based projects
+```
+
+​	
+
+```sh
+sudo apt-get install libopenmpi-dev
+```
+
+
+
+报错
+
+```
+ pip install h5py<3.0.0 -i https://pypi.tuna.tsinghua.edu.cn/simple
+-bash: 3.0.0: No such file or directory
+```
+
+指定确切的版本号后可以安装成功
+
+检查是否安装成功
+
+```sh
+echo $?
+```
+
+
+
+报错
+
+```
+    import bz2
+  File "/home/justt/python3.7/Python-3.7.17/Lib/bz2.py", line 19, in <module>
+    from _bz2 import BZ2Compressor, BZ2Decompressor
+ModuleNotFoundError: No module named '_bz2'
+```
+
+```sh
+sudo apt-get install libbz2-dev
+cd ~/python3.7/Python-3.7.17 
+./configure 
+make -j$(nproc)
+```
+
+
+
+报错
+
+```
+/home/justt/rl-stock-trading-1103/venv/lib/python3.7/site-packages/pandas/compat/__init__.py:124: UserWarning: Could not import the lzma module. Your installed Python is incomplete. Attempting to use lzma compression will result in a RuntimeError.
+```
+
+```sh
+sudo apt-get install liblzma-dev
+cd ~/python3.7/Python-3.7.17 
+./configure 
+make -j$(nproc)
+```
 
