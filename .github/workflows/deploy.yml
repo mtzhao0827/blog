@@ -55,7 +55,7 @@ jobs:
           extended: true
 
       - name: Build
-        run: hugo --minify --gc
+        run: hugo --minify --gc -b https://mtzhao0827.github.io/blog/
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v1
