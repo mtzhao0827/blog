@@ -1,16 +1,12 @@
 ---
 title: 从源码编译 Python
-description: ZFS is a state-of-the-art filesystem, and Docker is a revolutionary tool. But combining them can be a terrible idea...
-slug: docker-and-zfs-a-tough-pair
-date: 2022-08-07 08:54:00+0800
+description: 从源码编译 Python 3.7
+slug: build-python-from-source
+date: 2024-06-03 08:54:00+0800
 categories:
-    - filesystem
-    - containerization
-    - kernel
+    - build
 tags:
-    - overlayfs
-    - zfs
-    - docker
+    - python
 ---
 
 ### apt换源
