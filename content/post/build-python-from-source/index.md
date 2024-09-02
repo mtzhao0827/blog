@@ -83,7 +83,7 @@ CPython 是 Python 的主要实现，也是最广泛使用的 Python 解释器�
 sudo apt-get install -y make build-essential
 ```
 ### 开始编译
-运行 `./configure` 脚本来生成 Makefile 文件，然后使用 make 命令编译 Python。`-j$(nproc)` 选项允许make使用 nproc 个并发任务来加速编译过程。可以根据 CPU 核心数来调整这个值。编译完成后，执行 `./python --version` 命令来查看是否成功，成功的话会显示正确的 Python 版本号。
+运行 `./configure` 脚本来生成 Makefile 文件，然后使用 make 命令编译 Python。`-j$(nproc)` 选项允许 make 使用 nproc 个并发任务来加速编译过程。可以根据 CPU 核心数来调整这个值。编译完成后，执行 `./python --version` 命令来查看是否成功，成功的话会显示正确的 Python 版本号。
 ```sh
 ./configure
 make -j$(nproc)
@@ -95,7 +95,7 @@ make -j$(nproc)
 ```sh
 ../python3.7/Python-3.7.17/python -m venv venv
 ```
-其中 `../python3.7/Python-3.7.17/` 是我已经编译的 Python 目录，而 python 是 Python 解释器可执行文件，也就是说，我指定在 `../python3.7/Python-3.7.17/python` 这个直接路径下创建虚拟环境，如果没有指定的话，会在系统路径中的默认 Python 解释器中创建虚拟环境。`-m venv` 是在告诉 Python 解释器使用模块模式（`-m`）来运行 `venv` 模块,最后的 `venv` 是要创建的虚拟环境的名称。
+其中 `../python3.7/Python-3.7.17/` 是我已经编译的 Python 目录，而 python 是 Python 解释器可执行文件，也就是说，我指定在 `../python3.7/Python-3.7.17/python` 这个直接路径下创建虚拟环境，如果没有指定的话，会在系统路径中的默认 Python 解释器中创建虚拟环境。`-m venv` 是在告诉 Python 解释器使用模块模式（`-m`）来运行 `venv` 模块，最后的 `venv` 是要创建的虚拟环境的名称。
 
 但是运行该行命令后产生报错，得到关键信息如下。
 ```
