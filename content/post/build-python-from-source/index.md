@@ -78,7 +78,7 @@ cd Python-3.7.17
 ```
 
 ### 安装编译依赖
-CPython 是 Python 的主要实现，也是最广泛使用的 Python 解释器。我们指导 C 语言中就是用 make 来编译程序， 在这也是如此。 因为一开始编译不知道要安装哪些依赖，所以先安装了 build-essential 包，其中就包含了 gcc 编译器。
+CPython 是 Python 的主要实现，也是最广泛使用的 Python 解释器。我们知道 C 语言中就是用 make 来编译程序， 在这也是如此。 因为一开始编译不知道要安装哪些依赖，所以先安装了 build-essential 包，其中就包含了 gcc 编译器。
 ```sh
 sudo apt-get install -y make build-essential
 ```
