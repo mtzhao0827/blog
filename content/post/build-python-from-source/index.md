@@ -8,119 +8,15 @@ categories:
 tags:
     - python
 ---
-
-### apt换源
-```sh
-sudo vi /etc/apt/sources.list
-```
-在arm64下，使用ubuntu-ports
-
-```
-# 默认注释了源码镜像以提高 apt update 速度，如有需要可自行取消注释
-deb https://mirrors.tuna.tsinghua.edu.cn/ubuntu-ports/ jammy main restricted universe multiverse
-# deb-src https://mirrors.tuna.tsinghua.edu.cn/ubuntu-ports/ jammy main restricted universe multiverse
-deb https://mirrors.tuna.tsinghua.edu.cn/ubuntu-ports/ jammy-updates main restricted universe multiverse
-# deb-src https://mirrors.tuna.tsinghua.edu.cn/ubuntu-ports/ jammy-updates main restricted universe multiverse
-deb https://mirrors.tuna.tsinghua.edu.cn/ubuntu-ports/ jammy-backports main restricted universe multiverse
-# deb-src https://mirrors.tuna.tsinghua.edu.cn/ubuntu-ports/ jammy-backports main restricted universe multiverse
-
-# 以下安全更新软件源包含了官方源与镜像站配置，如有需要可自行修改注释切换
-deb https://mirrors.tuna.tsinghua.edu.cn/ubuntu-ports/ jammy-security main restricted universe multiverse
-# deb-src https://mirrors.tuna.tsinghua.edu.cn/ubuntu-ports/ jammy-security main restricted universe multiverse
-
-# 预发布软件源，不建议启用
-# deb https://mirrors.tuna.tsinghua.edu.cn/ubuntu-ports/ jammy-proposed main restricted universe multiverse
-# # deb-src https://mirrors.tuna.tsinghua.edu.cn/ubuntu-ports/ jammy-proposed main restricted universe multiverse
-```
-
-但是在amd64中，使用ubuntu
-
-```
-# 默认注释了源码镜像以提高 apt update 速度，如有需要可自行取消注释
-deb https://mirrors.tuna.tsinghua.edu.cn/ubuntu/ jammy main restricted universe multiverse
-# deb-src https://mirrors.tuna.tsinghua.edu.cn/ubuntu/ jammy main restricted universe multiverse
-deb https://mirrors.tuna.tsinghua.edu.cn/ubuntu/ jammy-updates main restricted universe multiverse
-# deb-src https://mirrors.tuna.tsinghua.edu.cn/ubuntu/ jammy-updates main restricted universe multiverse
-deb https://mirrors.tuna.tsinghua.edu.cn/ubuntu/ jammy-backports main restricted universe multiverse
-# deb-src https://mirrors.tuna.tsinghua.edu.cn/ubuntu/ jammy-backports main restricted universe multiverse
-
-# 以下安全更新软件源包含了官方源与镜像站配置，如有需要可自行修改注释切换
-deb https://mirrors.tuna.tsinghua.edu.cn/ubuntu/ jammy-security main restricted universe multiverse
-# deb-src https://mirrors.tuna.tsinghua.edu.cn/ubuntu/ jammy-security main restricted universe multiverse
-
-# 预发布软件源，不建议启用
-# deb https://mirrors.tuna.tsinghua.edu.cn/ubuntu/ jammy-proposed main restricted universe multiverse
-# # deb-src https://mirrors.tuna.tsinghua.edu.cn/ubuntu/ jammy-proposed main restricted universe multiverse
-```
-
-```sh
-sudo apt update
-sudo apt install wget
-```
-
-### 将源码直接下载到服务器中
-
-```sh
-mkdir -p ~/python3.7
-cd ~/python3.7/
-# CPython
-wget https://www.python.org/ftp/python/3.7.17/Python-3.7.17.tgz
-tar -xzvf Python-3.7.17.tgz
-
-PYTHON_SRC=$HOME/python3.7/Python-3.7.17
-cd $PYTHON_SRC
-```
-
-### 安装编译依赖
-```sh
-sudo apt-get install -y build-essential python3-pip libssl-dev libffi-dev libopenmpi-dev libbz2-dev liblzma-dev
-```
-### 开始编译
-
-```sh
-./configure
-make -j$(nproc)
-./python --version
-```
-
-### 创建虚拟环境
-
-```sh
-PROJ_DIR=$HOME/rl-stock-trading-1103
-cd $PROJ_DIR
-$PYTHON_SRC/python -m venv venv
-source venv/bin/activate
-```
-
-### 安装环境
-
-```sh
-pip install -r requirements.txt -i https://pypi.tuna.tsinghua.edu.cn/simple
-```
-
-
-
-- 为什么要用Python3.7（在pypi上看tensorflowxx的wheel包可用的python版本）
-
-https://pypi.org/project/tensorflow/1.15.0/#files
-
-- 为什么要从源码编译Python3.7（包管理器没有）
-
-
-- 怎么编译
-
-  - 下载源码
-
-  - 安装编译依赖
-
-  - 开始编译
-
-  - 用编译完成的Python跑量化交易项目
-
-  - 碰到问题
-
-  - 回到步骤1
-
+## 概述
+本科时期使用Windows系统，Python都是预先编译好的程序，可以直接安装而无需自己编译。研一刚入学，实验室老师让我加入了一个深度强化学习相关的项目，首先就需要在Ubuntu上配置环境。实验代码使用的tensorflow版本较低，在pypi上（https://pypi.org/project/tensorflow/1.15.0/#files）查找tensorflow1.15.0的wheel包可用的Python版本为3.7，而Ubuntu的APT包管理器中，已经没有提供预编译的Python3.7的包，因此需要从源代码编译安装Python，下面记录了整个编译安装流程以及其中遇到的问题，可以直接拉到最后给出了正确的流程。
+## 编译思路
+- 下载源码
+- 安装编译依赖
+- 开始编译
+- 用编译完成的Python跑实验代码
+- 碰到问题
+- 回到第1步
 ### apt换源
 ```sh
 sudo vi /etc/apt/sources.list
@@ -355,3 +251,91 @@ cd ~/python3.7/Python-3.7.17
 make -j$(nproc)
 ```
 
+## 正确流程
+### apt换源
+```sh
+sudo vi /etc/apt/sources.list
+```
+在arm64下，使用ubuntu-ports
+
+```
+# 默认注释了源码镜像以提高 apt update 速度，如有需要可自行取消注释
+deb https://mirrors.tuna.tsinghua.edu.cn/ubuntu-ports/ jammy main restricted universe multiverse
+# deb-src https://mirrors.tuna.tsinghua.edu.cn/ubuntu-ports/ jammy main restricted universe multiverse
+deb https://mirrors.tuna.tsinghua.edu.cn/ubuntu-ports/ jammy-updates main restricted universe multiverse
+# deb-src https://mirrors.tuna.tsinghua.edu.cn/ubuntu-ports/ jammy-updates main restricted universe multiverse
+deb https://mirrors.tuna.tsinghua.edu.cn/ubuntu-ports/ jammy-backports main restricted universe multiverse
+# deb-src https://mirrors.tuna.tsinghua.edu.cn/ubuntu-ports/ jammy-backports main restricted universe multiverse
+
+# 以下安全更新软件源包含了官方源与镜像站配置，如有需要可自行修改注释切换
+deb https://mirrors.tuna.tsinghua.edu.cn/ubuntu-ports/ jammy-security main restricted universe multiverse
+# deb-src https://mirrors.tuna.tsinghua.edu.cn/ubuntu-ports/ jammy-security main restricted universe multiverse
+
+# 预发布软件源，不建议启用
+# deb https://mirrors.tuna.tsinghua.edu.cn/ubuntu-ports/ jammy-proposed main restricted universe multiverse
+# # deb-src https://mirrors.tuna.tsinghua.edu.cn/ubuntu-ports/ jammy-proposed main restricted universe multiverse
+```
+
+但是在amd64中，使用ubuntu
+
+```
+# 默认注释了源码镜像以提高 apt update 速度，如有需要可自行取消注释
+deb https://mirrors.tuna.tsinghua.edu.cn/ubuntu/ jammy main restricted universe multiverse
+# deb-src https://mirrors.tuna.tsinghua.edu.cn/ubuntu/ jammy main restricted universe multiverse
+deb https://mirrors.tuna.tsinghua.edu.cn/ubuntu/ jammy-updates main restricted universe multiverse
+# deb-src https://mirrors.tuna.tsinghua.edu.cn/ubuntu/ jammy-updates main restricted universe multiverse
+deb https://mirrors.tuna.tsinghua.edu.cn/ubuntu/ jammy-backports main restricted universe multiverse
+# deb-src https://mirrors.tuna.tsinghua.edu.cn/ubuntu/ jammy-backports main restricted universe multiverse
+
+# 以下安全更新软件源包含了官方源与镜像站配置，如有需要可自行修改注释切换
+deb https://mirrors.tuna.tsinghua.edu.cn/ubuntu/ jammy-security main restricted universe multiverse
+# deb-src https://mirrors.tuna.tsinghua.edu.cn/ubuntu/ jammy-security main restricted universe multiverse
+
+# 预发布软件源，不建议启用
+# deb https://mirrors.tuna.tsinghua.edu.cn/ubuntu/ jammy-proposed main restricted universe multiverse
+# # deb-src https://mirrors.tuna.tsinghua.edu.cn/ubuntu/ jammy-proposed main restricted universe multiverse
+```
+
+```sh
+sudo apt update
+sudo apt install wget
+```
+
+### 将源码直接下载到服务器中
+
+```sh
+cd
+# CPython
+wget https://www.python.org/ftp/python/3.7.17/Python-3.7.17.tgz
+tar -xzvf Python-3.7.17.tgz
+
+PYTHON_SRC=$HOME/Python-3.7.17
+cd $PYTHON_SRC
+```
+
+### 安装编译依赖
+```sh
+sudo apt-get install -y build-essential python3-pip libssl-dev libffi-dev libopenmpi-dev libbz2-dev liblzma-dev
+```
+### 开始编译
+
+```sh
+./configure
+make -j$(nproc)
+./python --version
+```
+
+### 创建虚拟环境
+
+```sh
+PROJ_DIR=$HOME/rl-stock-trading-1103
+cd $PROJ_DIR
+$PYTHON_SRC/python -m venv venv
+source venv/bin/activate
+```
+
+### 安装环境
+
+```sh
+pip install -r requirements.txt -i https://pypi.tuna.tsinghua.edu.cn/simple
+```
