@@ -9,7 +9,7 @@ tags:
     - python
 ---
 ## 概述
-本科时期使用 Windows 系统，Python 都是预先编译好的程序，可以直接安装而无需自己编译。研一刚入学，实验室老师让我加入了一个深度强化学习相关的项目，首先就需要在 Ubuntu 上配置环境。实验代码使用的 tensorflow 版本较低，在 [pypi](https://pypi.org/project/tensorflow/1.15.0/#files) 上查找 tensorflow1.15.0 的 wheel 包可用的 Python 版本为3.7，而 Ubuntu 的APT包管理器中，已经没有提供预编译的 Python3.7 的包，因此需要从源代码编译安装 Python，下面记录了整个编译安装流程以及其中遇到的问题，可以直接拉到最后给出了正确的流程。
+本科时期使用 Windows 系统，Python 都是预先编译好的程序，可以直接安装而无需自己编译。研一刚入学，实验室老师让我加入了一个深度强化学习相关的项目，首先就需要在 Ubuntu 上配置环境。实验代码使用的 tensorflow 版本较低，在 [pypi](https://pypi.org/project/tensorflow/1.15.0/#files) 上查找 tensorflow1.15.0 的 wheel 包可用的 Python 版本为 3.7，而 Ubuntu 的 APT 包管理器中，已经没有提供预编译的 Python3.7 的包，因此需要从源代码编译安装 Python，下面记录了整个编译安装流程以及其中遇到的问题，可以直接拉到最后给出了正确的流程。
 ## 编译思路及遇到的问题
 - 下载源码
 - 安装编译依赖
