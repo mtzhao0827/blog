@@ -4,7 +4,7 @@ description: 使用 Spring Boot 搭建简单的 ToDolist 项目，旨在实现�
 slug: Spring Boot ToDolist
 date: 2024-06-03 08:54:00+0800
 categories:
-    - build
+    - Spring Boot
 tags:
     - java
 ---
