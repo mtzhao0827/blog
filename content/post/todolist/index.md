@@ -1,315 +1,351 @@
 ---
-title: 从源码编译 Python
-description: 从源码编译 Python 3.7
-slug: build-python-from-source
+title: 从零开始： Spring Boot ToDolist 开发过程记录
+description: 使用 Spring Boot 搭建简单的 ToDolist 项目，旨在实现用户登录、增删查改和API鉴权等功能。
+slug: Spring Boot ToDolist
 date: 2024-06-03 08:54:00+0800
 categories:
     - build
 tags:
-    - python
+    - java
 ---
-## 概述
-本科时期使用 Windows 系统，Python 都是预先编译好的程序，可以直接安装而无需自己编译。研一刚入学，实验室老师让我加入了一个深度强化学习相关的项目，首先就需要在 Ubuntu 上配置环境。实验代码使用的 tensorflow 版本较低，在 [pypi](https://pypi.org/project/tensorflow/1.15.0/#files) 上查找 tensorflow1.15.0 的 wheel 包可用的 Python 版本为 3.7，而 Ubuntu 的 APT 包管理器中，已经没有提供预编译的 Python3.7 的包，因此需要从源代码编译安装 Python，下面记录了整个编译安装流程以及其中遇到的问题，可以直接拉到最后给出了正确的流程。
-## 编译思路及遇到的问题
-- 下载源码
-- 安装编译依赖
-- 开始编译
-- 用编译完成的 Python 跑实验代码
-- 碰到问题
-- 回到第 1 步
-### APT换源
-在下载源码前，我先进行了 APT 换源。编辑 /etc/apt/sources.list 文件，修改里面的地址。这里我使用的是清华源。
-```sh
-sudo vi /etc/apt/sources.list
-```
-在 arm64 下，使用 ubuntu-ports
+# ToDo后端
 
-```
-# 默认注释了源码镜像以提高 apt update 速度，如有需要可自行取消注释
-deb https://mirrors.tuna.tsinghua.edu.cn/ubuntu-ports/ jammy main restricted universe multiverse
-# deb-src https://mirrors.tuna.tsinghua.edu.cn/ubuntu-ports/ jammy main restricted universe multiverse
-deb https://mirrors.tuna.tsinghua.edu.cn/ubuntu-ports/ jammy-updates main restricted universe multiverse
-# deb-src https://mirrors.tuna.tsinghua.edu.cn/ubuntu-ports/ jammy-updates main restricted universe multiverse
-deb https://mirrors.tuna.tsinghua.edu.cn/ubuntu-ports/ jammy-backports main restricted universe multiverse
-# deb-src https://mirrors.tuna.tsinghua.edu.cn/ubuntu-ports/ jammy-backports main restricted universe multiverse
+## 1 有一个能跑的spring项目，带一个hello world的api
 
-# 以下安全更新软件源包含了官方源与镜像站配置，如有需要可自行修改注释切换
-deb https://mirrors.tuna.tsinghua.edu.cn/ubuntu-ports/ jammy-security main restricted universe multiverse
-# deb-src https://mirrors.tuna.tsinghua.edu.cn/ubuntu-ports/ jammy-security main restricted universe multiverse
+使用 [spring initializr](https://start.spring.io/) 来创建一个web项目；
 
-# 预发布软件源，不建议启用
-# deb https://mirrors.tuna.tsinghua.edu.cn/ubuntu-ports/ jammy-proposed main restricted universe multiverse
-# # deb-src https://mirrors.tuna.tsinghua.edu.cn/ubuntu-ports/ jammy-proposed main restricted universe multiverse
+在src/main/java/com/example/ToDolist中，打开ToDolistApplication.java，添加方法
+
+```javascript
+package com.example.ToDolist;
+
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+
+@SpringBootApplication
+@RestController
+public class ToDolistApplication {
+
+	public static void main(String[] args) {
+		SpringApplication.run(ToDolistApplication.class, args);
+	}
+
+	@GetMapping("/hello")
+	public String hello(@RequestParam(value = "name", defaultValue = "World") String name) {
+		return String.format("Hello %s!", name);
+	}
+}
 ```
 
-但是在 amd64 中，使用 ubuntu
-
-```
-# 默认注释了源码镜像以提高 apt update 速度，如有需要可自行取消注释
-deb https://mirrors.tuna.tsinghua.edu.cn/ubuntu/ jammy main restricted universe multiverse
-# deb-src https://mirrors.tuna.tsinghua.edu.cn/ubuntu/ jammy main restricted universe multiverse
-deb https://mirrors.tuna.tsinghua.edu.cn/ubuntu/ jammy-updates main restricted universe multiverse
-# deb-src https://mirrors.tuna.tsinghua.edu.cn/ubuntu/ jammy-updates main restricted universe multiverse
-deb https://mirrors.tuna.tsinghua.edu.cn/ubuntu/ jammy-backports main restricted universe multiverse
-# deb-src https://mirrors.tuna.tsinghua.edu.cn/ubuntu/ jammy-backports main restricted universe multiverse
-
-# 以下安全更新软件源包含了官方源与镜像站配置，如有需要可自行修改注释切换
-deb https://mirrors.tuna.tsinghua.edu.cn/ubuntu/ jammy-security main restricted universe multiverse
-# deb-src https://mirrors.tuna.tsinghua.edu.cn/ubuntu/ jammy-security main restricted universe multiverse
-
-# 预发布软件源，不建议启用
-# deb https://mirrors.tuna.tsinghua.edu.cn/ubuntu/ jammy-proposed main restricted universe multiverse
-# # deb-src https://mirrors.tuna.tsinghua.edu.cn/ubuntu/ jammy-proposed main restricted universe multiverse
-```
-更改完成后，更新APT的包列表缓存来应用新的软件源。
-```sh
-sudo apt update
-sudo apt install wget
-```
-
-### 将源码直接下载到服务器中
-先创建一个 Python3.7 的文件夹，从 Python 官网中下载源码并解压。
-```sh
-mkdir python3.7
-cd python3.7/
-wget https://www.python.org/ftp/python/3.7.17/Python-3.7.17.tgz
-tar -xzvf Python-3.7.17.tgz
-cd Python-3.7.17
-```
-
-### 安装编译依赖
-CPython 是 Python 的主要实现，也是最广泛使用的 Python 解释器。我们知道 C 语言中就是用 make 来编译程序， 在这也是如此。 因为一开始编译不知道要安装哪些依赖，所以先安装了 build-essential 包，其中就包含了 gcc 编译器。
-```sh
-sudo apt-get install -y make build-essential
-```
-### 开始编译
-运行 `./configure` 脚本来生成 Makefile 文件，然后使用 make 命令编译 Python。`-j$(nproc)` 选项允许 make 使用 nproc 个并发任务来加速编译过程。可以根据 CPU 核心数来调整这个值。编译完成后，执行 `./python --version` 命令来查看是否成功，成功的话会显示正确的 Python 版本号。
-```sh
-./configure
-make -j$(nproc)
-./python --version
-```
-
-### 创建虚拟环境
-这里我创建了一个虚拟环境，用来安装实验代码需要用到的包。
-```sh
-../python3.7/Python-3.7.17/python -m venv venv
-```
-其中 `../python3.7/Python-3.7.17/` 是我已经编译的 Python 目录，而 python 是 Python 解释器可执行文件，也就是说，我指定在 `../python3.7/Python-3.7.17/python` 这个直接路径下创建虚拟环境，如果没有指定的话，会在系统路径中的默认 Python 解释器中创建虚拟环境。`-m venv` 是在告诉 Python 解释器使用模块模式（`-m`）来运行 `venv` 模块，最后的 `venv` 是要创建的虚拟环境的名称。
-
-但是运行该行命令后产生报错，得到关键信息如下。
-```
-Error: Command '['/home/justt/rl-stock-trading-1103/venv/bin/python', '-Im', 'ensurepip', '--upgrade', '--default-pip']' returned non-zero exit status 1.
-```
-可以看到是因为没有安装 pip，因此在系统中安装 pip，再一次重复前面的步骤。虚拟环境创建完成后，需要 `source venv/bin/activate` 激活它来开始使用。
+**运行**
 
 ```sh
-sudo apt install python3-pip
-cd ~/python3.7/Python-3.7.17 
-make -j$(nproc)
-cd ~/rl-stock-trading-1103
-../python3.7/Python-3.7.17/python -m venv venv
-source venv/bin/activate
-```
-到这里成功创建并激活了虚拟环境。注意，此时查看 Python 版本是执行 `python --version` 命令，而不是 2.4 节中提到的 `./python --version` 命令。这里没有写前面的路径，是因为虚拟环境激活后，任何我们运行的 Python 相关命令都会使用虚拟环境中的包和解释器，而不是系统默认的那些。执行 `ls -al venv/bin` 命令来进行验证。
-```
-lrwxrwxrwx 1 justt justt   67 Jun  2 16:32 python -> /home/justt/rl-stock-trading-1103/../python3.7/Python-3.7.17/python
-```
-可以看到 python 指向了虚拟环境中 Python 解释器。
-### 安装环境
-```
-pip install -r requirements.txt
-```
-尝试安装实验代码中的环境，得到了以下报错信息（截取了关键部分）。
-```WARNING: pip is configured with locations that require TLS/SSL, however the ssl module in Python is not available.
-WARNING: Retrying (Retry(total=4, connect=None, read=None, redirect=None, status=None)) after connection broken by 'SSLError("Can't connect to HTTPS URL because the SSL module is not available.")': /simple/numpy/
-WARNING: Retrying (Retry(total=3, connect=None, read=None, redirect=None, status=None)) after connection broken by 'SSLError("Can't connect to HTTPS URL because the SSL module is not available.")': /simple/numpy/
-WARNING: Retrying (Retry(total=2, connect=None, read=None, redirect=None, status=None)) after connection broken by 'SSLError("Can't connect to HTTPS URL because the SSL module is not available.")': /simple/numpy/
-WARNING: Retrying (Retry(total=1, connect=None, read=None, redirect=None, status=None)) after connection broken by 'SSLError("Can't connect to HTTPS URL because the SSL module is not available.")': /simple/numpy/
-WARNING: Retrying (Retry(total=0, connect=None, read=None, redirect=None, status=None)) after connection broken by 'SSLError("Can't connect to HTTPS URL because the SSL module is not available.")': /simple/numpy/
-Could not fetch URL https://pypi.org/simple/numpy/: There was a problem confirming the ssl certificate: HTTPSConnectionPool(host='pypi.org', port=443): Max retries exceeded with url: /simple/numpy/ (Caused by SSLError("Can't connect to HTTPS URL because the SSL module is not available.")) - skipping
-ERROR: Could not find a version that satisfies the requirement numpy (from versions: none)
-ERROR: No matching distribution found for numpy
-WARNING: pip is configured with locations that require TLS/SSL, however the ssl module in Python is not available.
-Could not fetch URL https://pypi.org/simple/pip/: There was a problem confirming the ssl certificate: HTTPSConnectionPool(host='pypi.org', port=443): Max retries exceeded with url: /simple/pip/ (Caused by SSLError("Can't connect to HTTPS URL because the SSL module is not available.")) - skipping
+mvn spring-boot:run
 ```
 
-发现无法安装，报错原因中有 `however the ssl module in Python is not available`，查询资料发现是因为下载源 `https://pypi.org/simple` 是HTTPS是HTTP使用TLS/SSL加密的，所以要再安装 `libssl-dev` 依赖。注意每次安装完新的依赖后，都需要重新进行编译。
+`@GetMapping("/hello")` 注解定义了一个HTTP GET请求的处理方法，该方法接受一个名为`name`的请求参数。
 
-```sh
-sudo apt install libssl-dev
-cd ~/python3.7/Python-3.7.17 
-./configure #检测刚刚装的libssl，添加进python编译选项中
-make -j$(nproc)
-cd -
-pip install -r requirements.txt -i https://pypi.tuna.tsinghua.edu.cn/simple
-```
-再此执行上述步骤，仍有报错。
-```
-Collecting sklearn
-  Downloading https://pypi.tuna.tsinghua.edu.cn/packages/46/1c/395a83ee7b2d2ad7a05b453872053d41449564477c81dc356f720b16eac4/sklearn-0.0.post12.tar.gz (2.6 kB)
-  Preparing metadata (setup.py) ... error
-  error: subprocess-exited-with-error
-  
-  × python setup.py egg_info did not run successfully.
-  │ exit code: 1
-  ╰─> [1 lines of output]
-      ERROR: Can not execute `setup.py` since setuptools is not available in the build environment.
-      [end of output]
-  
-  note: This error originates from a subprocess, and is likely not a problem with pip.
-error: metadata-generation-failed
-```
-报错原因中有 `Can not execute ``setup.py`` since setuptools is not available in the build environment.`。参考 [解决方案](https://github.com/romesco/hydra-lightning/issues/19#issuecomment-1116638713)，发现是缺少 `libffi-dev` 依赖。
-```
-sudo apt install libffi-dev
-cd ~/python3.7/Python-3.7.17 
-./configure 
-make -j$(nproc)
-cd -
-pip install -r requirements.txt -i https://pypi.tuna.tsinghua.edu.cn/simple
-```
-再此执行上述步骤，仍有报错。
-```
-ERROR: Failed building wheel for mpi4py
-Successfully built gym
-Failed to build mpi4py
-ERROR: Could not build wheels for mpi4py, which is required to install pyproject.toml-based projects
-```
-报错原因中有 `Could not build wheels for mpi4py, which is required to install pyproject.toml-based projects`，查询资料发现是缺少 `libopenmpi-dev` 依赖。
-
-```sh
-sudo apt-get install libopenmpi-dev
-cd ~/python3.7/Python-3.7.17 
-./configure 
-make -j$(nproc)
-cd -
-pip install -r requirements.txt -i https://pypi.tuna.tsinghua.edu.cn/simple
-```
-再此执行上述步骤，目前总算没有报错了。
-
-最后来检查是否安装成功。
-```sh
-echo $?
-```
-其中 `$?` 是一个特殊的 Shell 变量，存储上一个命令的退出状态码。惯例上 `：0` 表示命令成功执行。
-
-但是仍存在报错，信息如下。
-```
-    import bz2
-  File "/home/justt/python3.7/Python-3.7.17/Lib/bz2.py", line 19, in <module>
-    from _bz2 import BZ2Compressor, BZ2Decompressor
-ModuleNotFoundError: No module named '_bz2'
-```
-可以看到是缺少 `libbz2-dev` 依赖。
-```sh
-sudo apt-get install libbz2-dev
-cd ~/python3.7/Python-3.7.17 
-./configure 
-make -j$(nproc)
-cd -
-pip install -r requirements.txt -i https://pypi.tuna.tsinghua.edu.cn/simple
-```
-重复以上步骤，继续得到报错。
-```
-/home/justt/rl-stock-trading-1103/venv/lib/python3.7/site-packages/pandas/compat/__init__.py:124: UserWarning: Could not import the lzma module. Your installed Python is incomplete. Attempting to use lzma compression will result in a RuntimeError.
-```
-可以看到是缺少 `liblzma-dev` 依赖。
-```sh
-sudo apt-get install liblzma-dev
-cd ~/python3.7/Python-3.7.17 
-./configure 
-make -j$(nproc)
-cd -
-pip install -r requirements.txt -i https://pypi.tuna.tsinghua.edu.cn/simple
-```
-最终，成功安装了我的实验所需环境。因为一开始我并不知道需要安装哪些依赖，所以通过不断地尝试和对报错信息的分析，来一步步补全所需的依赖，这些依赖当然可以一起安装，就不需要不断重复编译过程，我在最后总结了正确的流程。
-
-## 正确流程
-### apt换源
-```sh
-sudo vi /etc/apt/sources.list
-```
-在 arm64 下，使用 ubuntu-ports
+输入`name`参数可以通过打开浏览器，在URL后面加上`?name=justt`。
 
 ```
-# 默认注释了源码镜像以提高 apt update 速度，如有需要可自行取消注释
-deb https://mirrors.tuna.tsinghua.edu.cn/ubuntu-ports/ jammy main restricted universe multiverse
-# deb-src https://mirrors.tuna.tsinghua.edu.cn/ubuntu-ports/ jammy main restricted universe multiverse
-deb https://mirrors.tuna.tsinghua.edu.cn/ubuntu-ports/ jammy-updates main restricted universe multiverse
-# deb-src https://mirrors.tuna.tsinghua.edu.cn/ubuntu-ports/ jammy-updates main restricted universe multiverse
-deb https://mirrors.tuna.tsinghua.edu.cn/ubuntu-ports/ jammy-backports main restricted universe multiverse
-# deb-src https://mirrors.tuna.tsinghua.edu.cn/ubuntu-ports/ jammy-backports main restricted universe multiverse
-
-# 以下安全更新软件源包含了官方源与镜像站配置，如有需要可自行修改注释切换
-deb https://mirrors.tuna.tsinghua.edu.cn/ubuntu-ports/ jammy-security main restricted universe multiverse
-# deb-src https://mirrors.tuna.tsinghua.edu.cn/ubuntu-ports/ jammy-security main restricted universe multiverse
-
-# 预发布软件源，不建议启用
-# deb https://mirrors.tuna.tsinghua.edu.cn/ubuntu-ports/ jammy-proposed main restricted universe multiverse
-# # deb-src https://mirrors.tuna.tsinghua.edu.cn/ubuntu-ports/ jammy-proposed main restricted universe multiverse
+http://localhost:8080/hello?name=justt
 ```
 
-但是在 amd64 中，使用 ubuntu
+或使用curl命令发送GET请求
 
 ```
-# 默认注释了源码镜像以提高 apt update 速度，如有需要可自行取消注释
-deb https://mirrors.tuna.tsinghua.edu.cn/ubuntu/ jammy main restricted universe multiverse
-# deb-src https://mirrors.tuna.tsinghua.edu.cn/ubuntu/ jammy main restricted universe multiverse
-deb https://mirrors.tuna.tsinghua.edu.cn/ubuntu/ jammy-updates main restricted universe multiverse
-# deb-src https://mirrors.tuna.tsinghua.edu.cn/ubuntu/ jammy-updates main restricted universe multiverse
-deb https://mirrors.tuna.tsinghua.edu.cn/ubuntu/ jammy-backports main restricted universe multiverse
-# deb-src https://mirrors.tuna.tsinghua.edu.cn/ubuntu/ jammy-backports main restricted universe multiverse
-
-# 以下安全更新软件源包含了官方源与镜像站配置，如有需要可自行修改注释切换
-deb https://mirrors.tuna.tsinghua.edu.cn/ubuntu/ jammy-security main restricted universe multiverse
-# deb-src https://mirrors.tuna.tsinghua.edu.cn/ubuntu/ jammy-security main restricted universe multiverse
-
-# 预发布软件源，不建议启用
-# deb https://mirrors.tuna.tsinghua.edu.cn/ubuntu/ jammy-proposed main restricted universe multiverse
-# # deb-src https://mirrors.tuna.tsinghua.edu.cn/ubuntu/ jammy-proposed main restricted universe multiverse
+curl http://localhost:8080/hello?name=justt
 ```
 
-```sh
-sudo apt update
-sudo apt install wget
+## 2 新建todo类（包含todo的内容），在内存里（变量）新建一个todo类的array，填一些内容；新建一个api返回这些todo
+
+新建controller和model包，在controller包中新建ToDoController类，处理HTTP请求并返回响应；在model包中新建ToDolist类。
+
+## 3 新建一个api创建todo
+```
+import org.springframework.web.bind.annotation.*;
 ```
 
-### 将源码直接下载到服务器中
+这段代码是Java Spring框架中的一个导入语句，用于导入Spring MVC框架中的注解。Spring MVC是一个基于Java的Web应用程序框架，用于简化Web应用程序的开发。这段代码导入了Spring MVC框架中的`@RestController`、`@RequestMapping`、`@GetMapping`、`@PostMapping`等注解，以便在后续的代码中使用这些注解来定义RESTful Web服务。
 
-```sh
-cd
-# CPython
-wget https://www.python.org/ftp/python/3.7.17/Python-3.7.17.tgz
-tar -xzvf Python-3.7.17.tgz
+`@RestController`注解是一个组合注解，它包括了`@Controller`和`@ResponseBody`。`@Controller`注解用于标识一个类或方法是一个控制器，Spring会自动将这个类或方法映射到URL上。`@ResponseBody`注解用于将控制器方法的返回值作为HTTP响应正文的正文。
 
-PYTHON_SRC=$HOME/Python-3.7.17
-cd $PYTHON_SRC
+`@RequestMapping`注解用于定义一个控制器方法处理HTTP请求。它接受一个字符串参数，表示请求的URL模式。当HTTP请求的URL与这个模式匹配时，Spring会自动调用这个方法。`@GetMapping`和`@PostMapping`注解是`@RequestMapping`的子注解，分别用于处理GET和POST请求。
+
+
+
+```
+import java.util.concurrent.atomic.AtomicLong;
 ```
 
-### 安装编译依赖
-```sh
-sudo apt-get install -y build-essential python3-pip libssl-dev libffi-dev libopenmpi-dev libbz2-dev liblzma-dev
-```
-### 开始编译
+这段代码是Java语言中导入的一个类库，名为`java.util.concurrent.atomic`。这个库提供了原子性操作的类，如`AtomicLong`。
 
-```sh
-./configure
-make -j$(nproc)
-./python --version
-```
+`AtomicLong`是一个实现了`Atomic`类的`Long`类。这个类提供了原子性的`long`值操作方法，如`getAndSet()`、`compareAndSet()`、`incrementAndGet()`等。这些方法在多线程环境下能够保证原子性操作。
 
-### 创建虚拟环境
+例如，使用`AtomicLong`可以保证线程安全的`long`值自增操作如下：
 
-```sh
-PROJ_DIR=$HOME/rl-stock-trading-1103
-cd $PROJ_DIR
-$PYTHON_SRC/python -m venv venv
-source venv/bin/activate
+```java
+AtomicLong counter = new AtomicLong(0);
+counter.incrementAndGet();
 ```
 
-### 安装环境
+在上面的代码中，`incrementAndGet()`方法会原子性地递增`counter`的值，并返回新的值。这种原子性操作在多线程环境下非常有用，因为它可以避免并发问题，如数据竞争。
 
-```sh
-pip install -r requirements.txt -i https://pypi.tuna.tsinghua.edu.cn/simple
+报错：`Cannot invoke "java.util.concurrent.atomic.AtomicLong.incrementAndGet()" because "this.counter" is null`
+
+counter没有正确初始化，少了`counter = new AtomicLong();`
+
+## 4 删除todo（怎么确定删哪一个？）
+
+用请求中输入的id来找todos列表中是否有对应的id
+
+```java
+@DeleteMapping("/{id}")
 ```
+
+- 为什么要这么设计URL（在id前后加“{}”）？
+
+  花括号 `{}` 是语法的一部分，用来表示 URL 路径中的变量。这种用法允许你定义 RESTful API 的路径参数，并在控制器方法参数中使用这些变量。
+
+  例如当发送一个 DELETE 请求到 
+
+  ```
+  http://localhost:8080/api/todos/1
+  ```
+
+   时：
+
+  - Spring 看到这个 URL 匹配 `@DeleteMapping("/{id}")`。
+  - Spring 提取 URL 中的 `1` 并将其转换为 `Long` 类型，然后赋值给 `deleteTodo` 方法的 `id` 参数。
+  - 方法内部会使用这个 `id` 执行删除操作。
+
+
+
+> HTTP方法和含义
+>
+> - GET（SELECT）：从服务器取出资源（一项或多项）。
+> - POST（CREATE）：在服务器新建一个资源。
+> - PUT（UPDATE）：在服务器更新资源（客户端提供完整资源数据）。
+> - PATCH（UPDATE）：在服务器更新资源（客户端提供需要修改的资源数据）。
+> - DELETE（DELETE）：从服务器删除资源。
+
+RESTful是面向资源的，每种资源可能由一个或多个URI对应，但一个URI只指向一种资源。
+
+**URL设计规范**
+
+> URL为统一资源定位器 ,接口属于服务端资源，首先要通过URL这个定位到资源才能去访问，而通常一个完整的URL组成由以下几个部分构成：
+>
+> ```text
+> URI = scheme "://" host  ":"  port "/" path [ "?" query ][ "#" fragment ]
+> ```
+>
+> scheme: 指底层用的协议，如http、https、ftp
+> host: 服务器的IP地址或者域名
+> port: 端口，http默认为80端口
+> path: 访问资源的路径，就是各种web 框架中定义的route路由
+> query: 查询字符串，为发送给服务器的参数，在这里更多发送数据分页、排序等参数。
+> fragment: 锚点，定位到页面的资源
+
+优点：将动作放到URL的Path上清晰可见，更利于团队的理解和交流
+
+缺点：操作方式繁琐；实际业务API可能有各种需求比较复杂，单单使用资源的增删改查可能并不能有效满足使用需求，强行使用RESTful风格API只会增加开发难度和成本。
+
+## 5 新建一个api修改todo（怎么确定改哪一个？）
+
+- Boolean和boolean
+
+  在 Java 中，基本类型（例如 `boolean`、`int`、`char` 等）不能与 `null` 进行比较，因为基本类型不能为 `null`。只有对象（引用类型）才能为 `null`。
+
+  在你的例子中，`completed` 字段是 `Boolean` 类型的包装类对象，而不是基本类型 `boolean`，所以可以与 `null` 进行比较。
+
+  不过，如果你在某些地方使用了基本类型 `boolean` 而导致这个错误，需要改成使用包装类型 `Boolean`。
+
+通过id确定修改哪一个ToDo，使用PATCH，用户提供需要修改的内容或者完成情况。
+
+为什么要用到ResponseEntity，比较它和直接返回ToDolist
+
+## 	前端
+
+(index):111 Error deleting todo: SyntaxError: Unexpected token 'D', "Deleted" is not valid JSON
+
+## 连接数据库 MySQL Spring Data JPA
+**docker 创建数据库**
+
+```shell
+docker run --name=mysql-server -p=3306:3306 -e=MYSQL_ROOT_PASSWORD=securepswd -e=MYSQL_DATABASE=todolistdb -d mysql:8.4
+```
+
+```shell
+docker start mysql-server
+```
+
+```shell
+docker ps -a
+```
+
+查看所有容器（包括停止的）的状态。
+
+1. 在pom.xml文件中添加依赖
+```java
+  <dependency>
+      <groupId>mysql</groupId>
+      <artifactId>mysql-connector-java</artifactId>
+      <scope>runtime</scope>
+  </dependency>
+```
+
+报错`mysql:mysql-connector-java:jar:unknown was not found in https://repo.maven.apache.org/maven2 during a previous attempt.`
+
+修改为
+
+```java
+  <dependency>
+      <groupId>com.mysql</groupId>
+      <artifactId>mysql-connector-j</artifactId>
+      <scope>runtime</scope>
+  </dependency>
+```
+
+2. 创建数据库
+
+   `docker run --name=mysql-server -p=3306:3306 -e=MYSQL_ROOT_PASSWORD=securepswd -e=MYSQL_DATABASE=todolistdb -d mysql:8.4`
+
+
+
+遇到的问题
+
+```java
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+```
+
+https://docs.jboss.org/hibernate/jpa/2.1/api/javax/persistence/GenerationType.html
+
+
+
+## URL规范化（RESTful）
+
+
+
+## HTTP状态码规范化、错误返回规范化（RESTful）
+
+- 遇到的问题
+
+  改写deleteToDo时，`HttpStatus.NO_CONTENT`通常用于表示服务器成功执行了请求，但没有返回任何内容。所以想使用`ResponseEntity`并且不希望返回任何内容（也就是没有响应体），使用了`Void`作为泛型参数。`.build()`方法创建了一个没有主体内容的`ResponseEntity`实例。
+
+```java
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteToDo(@PathVariable Long id) {
+        toDoRepository.deleteById(id);
+        return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
+    }
+```
+
+- **git仓库管理**
+  1. git checkout main
+  2. git checkout -b 新分支名
+  3. 编写代码
+  4. commit
+  5. git push --set-upstream origin 新分支名
+  6. merge
+  7. git checkout main
+  8. git pull
+
+
+
+XXXException ：继承原生的 Exception ，本项目中主要用于传递 messsage
+
+XXXAdvice： 处理这个特定异常，在本项目中返回特定格式的 Response
+
+
+
+## 分页查询
+
+- 遇到的问题
+
+  1. import `Pageable`类型错误
+
+     `org.springframework.data.domain.Pageable` 和 `java.awt.print.Pageable` 是两个完全不同的接口，它们服务于不同的目的，这就是为什么在Spring Data JPA环境中应该使用 `org.springframework.data.domain.Pageable` 而不是 `java.awt.print.Pageable`。
+     以下是一些关键点，解释了为什么应该使用 `org.springframework.data.domain.Pageable`：
+     1. **目的不同**：
+        - `org.springframework.data.domain.Pageable` 是Spring Data库的一部分，专门用于分页和排序操作。它定义了分页请求的抽象，比如页码、页面大小和排序方向。
+        - `java.awt.print.Pageable` 是Java AWT (Abstract Window Toolkit)的一部分，用于定义能够分页打印文档的类。它用于打印任务，与数据库查询分页无关。
+     2. **使用场景不同**：
+        - 当你使用Spring Data JPA进行数据持久化时，`org.springframework.data.domain.Pageable` 用于在数据库查询中实现分页。例如，在REST API中返回分页的列表数据。
+        - `java.awt.print.Pageable` 则用于图形用户界面(GUI)应用程序中，涉及到将内容分页打印到纸张上。
+     3. **功能不同**：
+        - `org.springframework.data.domain.Pageable` 提供了方法来获取分页信息，如当前页码、页面大小、排序等，这些都是执行分页查询所必需的。
+        - `java.awt.print.Pageable` 提供了方法来获取关于打印文档分页的信息，如每页的内容范围。
+     4. **集成和兼容性**：
+        - `org.springframework.data.domain.Pageable` 与Spring Data JPA无缝集成，允许你轻松地在Spring环境中使用分页功能。
+        - `java.awt.print.Pageable` 与Spring Data JPA不兼容，因为它不是为了数据库操作设计的。
+        简而言之，`org.springframework.data.domain.Pageable` 是为了与Spring Data JPA一起使用而设计的，而 `java.awt.print.Pageable` 是为了与打印相关的任务一起使用而设计的。因此，在你的Spring Data JPA项目中，你应该使用 `org.springframework.data.domain.Pageable` 来实现分页查询。
+
+## 用户
+
+### 创建流程
+
+1. 创建用户模型。 User.java
+2. 创建用户仓库接口。 UserRepository.java
+3. 创建用户控制器UserController.java来处理注册和登录请求。
+4. 更新ToDolist.java模型，使其与用户关联。
+
+
+
+### 密码加密
+
+调用Spring Security中的BCryptPasswordEncoder类进行加密。
+
+但是Spring Security默认配置要求所有请求都必须进行认证，因此进入了其基本的登录界面。
+
+我使用的Spring Boot版本为3.3.1，`WebSecurityConfigurerAdapter`已被标记为过时，因此使用`SecurityFilterChain`。由于还没有实现鉴权，配置中打开了所有的权限。
+
+```java
+@EnableWebSecurity
+@Configuration
+public class SecurityConfig {
+
+    @Bean
+    SecurityFilterChain springWebFilterChain(
+            HttpSecurity http
+    ) throws Exception {
+
+        return http.httpBasic( AbstractHttpConfigurer::disable) //  禁用HTTP Basic认证
+                .sessionManagement(c ->
+                        c.sessionCreationPolicy(SessionCreationPolicy.STATELESS)) // Spring Security不会创建或使用任何服务器端会话来跟踪用户状态 ？
+                .csrf(AbstractHttpConfigurer::disable)
+                .authorizeRequests(c -> c
+                        .anyRequest().permitAll() // 先配置了所有请求都不需要认证
+                )
+                .build();
+    }
+
+    @Bean
+    public PasswordEncoder passwordEncoder() {
+        return new BCryptPasswordEncoder();
+    }
+}
+```
+
+对于BCryptPasswordEncoder，同一个明文加密两次，加密结果是不同的。因此使用BCryptPasswordEncoder去加密登录密码，在登录验证时，要使用BCryptPasswordEncoder的**matches方法**来进行验证。参考：https://cloud.tencent.com/developer/article/1779217
+
+```java
+if (!passwordEncoder.matches(user.getPassword(),existingUser.getPassword())) {
+            Long id = existingUser.getId();
+            throw new UserUnauthorizedException(id);
+}
+```
+
+
+
+## JWT实现（参考https://springdoc.cn/spring-boot-spring-security-jwt-mysql/）
+
+### JwtAuthenticationEntryPoint
+
+遇到报错`Class 'JwtAuthenticationEntryPoint' must either be declared abstract or implement abstract method 'commence(HttpServletRequest, HttpServletResponse, AuthenticationException)' in 'AuthenticationEntryPoint'`，发现是没有自动导入`AuthenticationException`包。 （为什么？）
+
+`AuthenticationEntryPoint`是一个入口点，用于检查用户是否已经通过身份认证。在 JWT 中使用 Spring Security 时，就必须对其进行继承，以提供更好的 Spring Security 过滤器链（filter chain）管理。
