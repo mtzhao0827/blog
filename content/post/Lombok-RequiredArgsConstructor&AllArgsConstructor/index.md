@@ -46,7 +46,7 @@ Authentication authentication = authenticationManager.authenticate(
 ```
 2024-09-05T16:06:23.723+08:00 ERROR 70041 --- [ToDolist] [nio-8080-exec-5] o.a.c.c.C.[.[.[/].[dispatcherServlet]    : Servlet.service() for servlet [dispatcherServlet] in context with path [] threw exception [Request processing failed: java.lang.NullPointerException: Cannot invoke "org.springframework.security.authentication.AuthenticationManager.authenticate(org.springframework.security.core.Authentication)" because "this.authenticationManager" is null] with root cause
 ```
-报错中显示 `"this.authenticationManager" is null] with root cause`，debug 前面代码也没有发现问题，在代码中可以看到 `authenticationManager` 是灰色的，因此判定是没有正确注入。
+报错中显示 `"this.authenticationManager" is null] with root cause`，debug 发现是没有正确注入。
 ![alt text](image.png)
 ## 解决方案
 ### 使用 @Autowired 注入
