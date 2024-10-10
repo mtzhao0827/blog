@@ -1,7 +1,7 @@
 ---
 title: RequiredArgsConstructor 无法注入
 description: 我在 SecurityConfig 中定义了 AuthenticationManager 方法，但是在另一个类中声明时发现使用 @RequiredArgsConstructor 无法注入？
-slug: 'Lombok: RequiredArgsConstructor & AllArgsConstructor'
+slug: unable-to-inject-requiredargsconstructor
 date: 2024-09-05 15:52:00+0800
 categories:
     - Troubleshooting

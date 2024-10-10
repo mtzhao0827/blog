@@ -1,7 +1,7 @@
 ---
 title: 从零开始： Spring Boot ToDolist 开发过程记录
 description: 使用 Spring Boot 搭建简单的 ToDolist 项目，旨在实现用户登录、增删查改和API鉴权等功能。
-slug: Spring Boot ToDolist
+slug: use-spring-boot-to-build-todolist-project
 date: 2024-06-03 08:54:00+0800
 categories:
     - Spring Boot
@@ -16,7 +16,7 @@ tags:
 
 在src/main/java/com/example/ToDolist中，打开ToDolistApplication.java，添加方法
 
-```javascript
+```java
 package com.example.ToDolist;
 
 import org.springframework.boot.SpringApplication;

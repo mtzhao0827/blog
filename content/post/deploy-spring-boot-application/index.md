@@ -1,7 +1,7 @@
 ---
 title: 在服务器上部署 Spring Boot Application
 description: 记录了在服务器上部署 Spring Boot Application 的过程，解决了 JDK 编译和后台运行等问题。
-slug: Deploying Spring Boot Application on Server
+slug: deploy-spring-boot-application
 date: 2024-10-09 17:12:00+0800
 categories:
     - Deploying
